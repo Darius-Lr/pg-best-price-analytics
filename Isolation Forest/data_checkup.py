@@ -11,7 +11,7 @@ df['Price_Delta'] = df['Final Price'] - df['Calculated_Sum']
 df['Delta_Percentage'] = (df['Price_Delta'].abs() / df['Final Price']) * 100
 
 # setam pragul de eroare
-error_threshold = 3.0
+error_threshold = 1.0
 
 # filtram doar datele corecte matematic
 df_validated = df[df['Delta_Percentage'] <= error_threshold].copy()
