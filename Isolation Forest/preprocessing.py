@@ -35,5 +35,5 @@ df['Grammage'] = df.groupby(comb)['Grammage'].transform(lambda x: fill_group_med
 output_path = 'Project_2_Data_Cleaned.xlsx'
 df.to_excel(output_path, index=False)
 
-print(f"Fisier salvat cu succes: {output_path}")
-print(f"Randuri finale: {len(df)}")
+print(f"fisier salvat cu succes: {output_path}")
+print(f"randuri finale: {len(df)}")
