@@ -14,7 +14,7 @@ df = pd.read_excel('Project_2_Data_Features.xlsx')
 df['Final Price Month'] = pd.to_datetime(df['Final Price Month'])
 
 results = []
-combinations = df.groupby(['Plant', 'Supplier', 'Material Sub Type'])
+combinations = df.groupby(['Plant', 'Supplier','Material Type' ,'Material Sub Type'])
 
 print(f"incepe validarea pentru {len(combinations)} combinatii...")
 
