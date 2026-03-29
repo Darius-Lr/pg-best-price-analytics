@@ -1,3 +1,4 @@
+# importing all the libraries I need
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
@@ -6,16 +7,16 @@ from matplotlib.figure import Figure
 import matplotlib.colors as mcolors
 import ctypes
 
-
+# import my custom function
 from random_search import load_data, random_search_material
 
 # =========================
 # LOAD DATA
 # =========================
-
+# load the main excel file
 df = load_data("Project 2 Data.xlsx")
 
-
+# try to load the other files, if they don't exist just make empty dataframes
 try:
     best_calendaristic_price = pd.read_excel("Best_Calendaristic_price.xlsx")
     theoretical_best = pd.read_excel("Theoretical_Best_Combinations_S3.xlsx")
@@ -23,14 +24,14 @@ except FileNotFoundError:
     best_calendaristic_price = pd.DataFrame()
     theoretical_best = pd.DataFrame()
 
-
+# get all the unique materials to put in the dropdown
 materials = df['Material Description'].dropna().unique().tolist()
 
 
 # =========================
 # CLASA PENTRU BUTOANE ROTUNJITE
 # =========================
-
+# I found this class online to make the tkinter buttons look round and modern
 class RoundedButton(tk.Canvas):
     def __init__(self, parent, text, command=None, width=210, height=40, radius=20, bg_color="#212121",
                  btn_color="#3a3a3a", active_color="#4a4a4a", text_color="white"):
@@ -92,13 +93,13 @@ class RoundedButton(tk.Canvas):
 # FUNCTII GRAFICE INTEGRATE IN GUI
 # =========================
 
-
+# function to clear the old plot before making a new one
 def clear_plot():
     for widget in plot_frame.winfo_children():
         widget.destroy()
 
 
-
+# function to figure out if we need dark or light colors
 def get_colors():
     if dark_mode == True:
         bg_color = '#1e1e1e'
@@ -110,15 +111,15 @@ def get_colors():
     return bg_color, fg_color
 
 
-
+# PIE CHART for price structure
 def calculate_price_impact(df, material):
     data = df[df['Material Description'] == material]
 
-
+    # if no data, stop here
     if data.empty:
         return
 
-
+    # calculate averages
     avg_feed = data['Feedstock Price'].mean()
     avg_conv = data['Conversion Price'].mean()
     avg_trans = data['Transport Price'].mean()
@@ -146,7 +147,7 @@ def calculate_price_impact(df, material):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
-
+# BAR CHART to compare models
 def compare_all_models(df, material, best_calendaristic_price, theoretical_best):
     from random_search import random_search_material
 
@@ -155,12 +156,12 @@ def compare_all_models(df, material, best_calendaristic_price, theoretical_best)
         status_text.set("No data for selected material.")
         return
 
-
+    # get real best
     real = best_calendaristic_price[best_calendaristic_price['Material Description'] == material]
-
+    # get theoretical best
     theo = theoretical_best[theoretical_best['Material Description'] == material]
 
-
+    # get random search best
     results1, best_random, results2 = random_search_material(df, material, n_iter=2000)
 
     if real.empty or theo.empty or best_random is None:
@@ -171,7 +172,7 @@ def compare_all_models(df, material, best_calendaristic_price, theoretical_best)
     theo_price = theo['Theoretical Best Final Price'].min()
     random_price = best_random['Total Synthetic Price']
 
-
+    # make sure theo is not bigger than real just in case
     if theo_price > real_price:
         theo_price = real_price
 
@@ -189,7 +190,7 @@ def compare_all_models(df, material, best_calendaristic_price, theoretical_best)
         color=['#3498db', '#2ecc71', '#f39c12']
     )
 
-
+    # put the numbers on top of the bars
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width() / 2,
@@ -209,7 +210,7 @@ def compare_all_models(df, material, best_calendaristic_price, theoretical_best)
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
-
+# SUPPLIER COMPARISON
 def plot_supplier_comparison(df, material):
     data = df[df['Material Description'] == material]
 
@@ -223,7 +224,7 @@ def plot_supplier_comparison(df, material):
     m_sub = base['Material Sub Type']
     plant = base['Plant']
 
-
+    # filter to get all suppliers for this type
     filtered = df[
         (df['Material Type'] == m_type) &
         (df['Material Sub Type'] == m_sub) &
@@ -234,7 +235,7 @@ def plot_supplier_comparison(df, material):
         status_text.set("No comparable suppliers.")
         return
 
-
+    # find the best price for each supplier
     best_per_supplier = (
         filtered.groupby('Supplier')['Calculated Price']
         .min()
@@ -257,7 +258,7 @@ def plot_supplier_comparison(df, material):
     import matplotlib.pyplot as plt
     cmap = plt.cm.get_cmap('tab20', len(best_per_supplier))
 
-
+    # making a list of colors for the bars
     colors = []
     for i in range(len(best_per_supplier)):
         colors.append(cmap(i))
@@ -268,7 +269,7 @@ def plot_supplier_comparison(df, material):
         color=colors
     )
 
-
+    # add values on top
     for bar in bars:
         height = bar.get_height()
         ax.text(
@@ -297,7 +298,7 @@ def plot_supplier_comparison(df, material):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
-
+# LINE CHART for total price
 def plot_total_price_trend(df, material):
     data = df[df['Material Description'] == material].copy()
 
@@ -334,7 +335,7 @@ def plot_total_price_trend(df, material):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
-
+# 3 LINE CHARTS for components
 def plot_component_trends(df, material):
     data = df[df['Material Description'] == material].copy()
     if data.empty:
@@ -369,7 +370,7 @@ def plot_component_trends(df, material):
 
     trans = data.groupby('Date')['Transport Price'].mean().reset_index()
 
-
+    # check if transport is completely zero everywhere to avoid errors
     has_transport = False
     for val in trans['Transport Price']:
         if pd.notna(val) and val > 0:
@@ -378,7 +379,7 @@ def plot_component_trends(df, material):
     if has_transport == True:
         trans['Transport Price'] = trans['Transport Price'].replace(0, None)
 
-
+        # remove crazy jumps so graph looks clean
         trans['diff'] = trans['Transport Price'].diff().abs()
         threshold = trans['Transport Price'].mean() * 0.8
         trans.loc[trans['diff'] > threshold, 'Transport Price'] = None
@@ -402,7 +403,7 @@ def plot_component_trends(df, material):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
-
+# HISTOGRAM for random search
 def gui_plot_random_search(results_df, material):
     clear_plot()
     bg_color, fg_color = get_colors()
@@ -435,7 +436,7 @@ def gui_plot_random_search(results_df, material):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
-
+# safe color checker
 def get_valid_color(c_name, fallback="#4fa8d1"):
     try:
         clean_name = str(c_name).strip().replace(" ", "").lower()
@@ -445,7 +446,7 @@ def get_valid_color(c_name, fallback="#4fa8d1"):
         return fallback
 
 
-
+# COLOR ANALYSIS BAR CHART
 def plot_color_analysis(df, material):
     data = df[df['Material Description'] == material]
 
@@ -483,7 +484,7 @@ def plot_color_analysis(df, material):
     ax = fig.add_subplot(111)
     ax.set_facecolor(bg_color)
 
-
+    # get colors one by one
     colors = []
     for c in best_per_color['Color']:
         colors.append(get_valid_color(c))
@@ -517,7 +518,118 @@ def plot_color_analysis(df, material):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
+# CUSTOM SCENARIO
+def show_custom_scenario():
+    clear_plot()
 
+    material = selected_material.get()
+    if not material:
+        status_text.set("Select a material first.")
+        return
+
+    data = df[df['Material Description'] == material].copy()
+
+    if data.empty:
+        status_text.set("No data available.")
+        return
+
+    # convert dates properly
+    data['Date'] = pd.to_datetime(data['Final Price Month'])
+
+    # safely get unique months as a list and drop empty ones
+    months = sorted(data['Date'].dt.strftime('%Y-%m').dropna().unique())
+
+    bg_color, fg_color = get_colors()
+
+    # UI FRAME for scenario
+    scenario_frame = tk.Frame(plot_frame, bg=bg_color)
+    scenario_frame.pack(pady=20)
+
+    # dropdown variables
+    feed_var = tk.StringVar()
+    conv_var = tk.StringVar()
+    trans_var = tk.StringVar()
+
+    # helper function to create rows of dropdowns
+    def create_dropdown(label_text, var):
+        frame = tk.Frame(scenario_frame, bg=bg_color)
+        frame.pack(pady=5)
+
+        lbl = tk.Label(frame, text=label_text, bg=bg_color, fg=fg_color, font=("Segoe UI", 10, "bold"))
+        lbl.pack(side="left", padx=5)
+
+        combo = ttk.Combobox(frame, textvariable=var, values=months, width=15)
+        combo.pack(side="left", padx=5)
+
+    create_dropdown("Feedstock Month:", feed_var)
+    create_dropdown("Conversion Month:", conv_var)
+    create_dropdown("Transport Month:", trans_var)
+
+    result_label = tk.Label(scenario_frame, text="", bg=bg_color, fg="#2fa572",
+                            font=("Segoe UI", 12, "bold"))
+    result_label.pack(pady=15)
+
+    # logic to calculate the price when the button is clicked
+    def calculate_custom_price():
+        try:
+            f_month = feed_var.get()
+            c_month = conv_var.get()
+            t_month = trans_var.get()
+
+            # check if the user selected everything
+            if f_month == "" or c_month == "" or t_month == "":
+                status_text.set("Select all months.")
+                return
+
+            # safely get rows matching the month
+            f_data = data[data['Date'].dt.strftime('%Y-%m') == f_month]['Feedstock Price']
+            c_data = data[data['Date'].dt.strftime('%Y-%m') == c_month]['Conversion Price']
+            t_data = data[data['Date'].dt.strftime('%Y-%m') == t_month]['Transport Price']
+
+            # safely extract the first price or use 0.0 if empty or NaN
+            if len(f_data) > 0 and pd.notna(f_data.iloc[0]):
+                f_price = float(f_data.iloc[0])
+            else:
+                f_price = 0.0
+
+            if len(c_data) > 0 and pd.notna(c_data.iloc[0]):
+                c_price = float(c_data.iloc[0])
+            else:
+                c_price = 0.0
+
+            if len(t_data) > 0 and pd.notna(t_data.iloc[0]):
+                t_price = float(t_data.iloc[0])
+            else:
+                t_price = 0.0
+
+            total = f_price + c_price + t_price
+
+            result_label.config(
+                text=f"Total Price: {total:.2f}\n(Feedstock: {f_price:.2f} | Conversion: {c_price:.2f} | Transport: {t_price:.2f})"
+            )
+
+            status_text.set("Custom scenario calculated.")
+
+        except Exception as e:
+            status_text.set("Error in calculation.")
+            print(e)
+
+            # add the calculate button
+
+    calc_btn = tk.Button(
+        scenario_frame,
+        text="Calculate",
+        command=calculate_custom_price,
+        bg="#4fa8d1",
+        fg="white",
+        font=("Segoe UI", 10, "bold"),
+        padx=10,
+        pady=5
+    )
+    calc_btn.pack(pady=10)
+
+
+# function to make the windows top bar dark
 def set_titlebar_color(window, dark=True):
     try:
         window.update()
@@ -577,7 +689,7 @@ fields = [
 ]
 info_vars = {}
 
-
+# loop through the fields and create labels for them
 for i in range(len(fields)):
     field = fields[i]
     info_vars[field] = tk.StringVar(value="N/A")
@@ -647,7 +759,7 @@ def toggle_theme():
         set_titlebar_color(root, dark=False)
         dark_mode = False
 
-    #dark mode switch
+    # dark mode switch
     else:
         root.configure(bg="#1e1e1e")
         main_area.configure(bg="#1e1e1e")
@@ -758,6 +870,13 @@ def run_total_price_trend():
         status_text.set("Done.")
 
 
+def run_custom_scenario():
+    if selected_material.get():
+        status_text.set("Building custom scenario...")
+        root.update()
+        show_custom_scenario()
+
+
 # function to easily add a button to the sidebar
 def add_rounded_button(text, command):
     btn = RoundedButton(sidebar, text=text, command=command, bg_color="#212121", btn_color="#3a3a3a",
@@ -774,11 +893,12 @@ add_rounded_button("Random Search", run_random)
 add_rounded_button("Color Analysis", run_color_analysis)
 add_rounded_button("Supplier Comparison", run_supplier_analysis)
 add_rounded_button("Total Price Trend", run_total_price_trend)
+add_rounded_button("Custom Scenario", run_custom_scenario)
 
 # theme button bottom
 theme_btn = RoundedButton(sidebar, text="🌙 / ☀️ Toggle Theme", command=toggle_theme, bg_color="#212121",
                           btn_color="#3a3a3a", active_color="#505050")
-theme_btn.pack(side="bottom", pady=40)
+theme_btn.pack(side="bottom", pady=20)
 buttons.append(theme_btn)
 
 # footer
